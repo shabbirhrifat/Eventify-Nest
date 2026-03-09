@@ -1,0 +1,1741 @@
+{
+  "info": {
+    "name": "Competition and Event Registration API",
+    "description": "Role-based collection for the NestJS competition and event registration backend.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "noauth"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const traceId = pm.variables.replaceIn('{{$guid}}');",
+          "pm.collectionVariables.set('requestId', traceId);",
+          "pm.request.headers.upsert({ key: 'X-Request-Id', value: traceId });",
+          "pm.request.headers.upsert({ key: 'Accept', value: 'application/json' });",
+          "",
+          "const requestUrl = pm.request.url.toString();",
+          "const isRegistrationRequest =",
+          "  pm.request.method === 'POST' && /\\/events\\/[^/]+\\/register$/.test(requestUrl);",
+          "",
+          "if (isRegistrationRequest) {",
+          "  const idempotencyKey = pm.variables.replaceIn('{{$guid}}');",
+          "  pm.collectionVariables.set('idempotencyKey', idempotencyKey);",
+          "  pm.request.headers.upsert({ key: 'Idempotency-Key', value: idempotencyKey });",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.collectionVariables.set('lastStatusCode', String(pm.response.code));",
+          "",
+          "const contentType = pm.response.headers.get('content-type') || '';",
+          "if (!contentType.includes('application/json')) {",
+          "  return;",
+          "}",
+          "",
+          "try {",
+          "  const payload = pm.response.json();",
+          "  if (payload && payload.id) {",
+          "    pm.collectionVariables.set('lastEntityId', String(payload.id));",
+          "  }",
+          "} catch (error) {",
+          "  console.log('Skipping JSON parsing for response cache:', error.message);",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api",
+      "type": "string"
+    },
+    {
+      "key": "participantEmail",
+      "value": "participant@example.com",
+      "type": "string"
+    },
+    {
+      "key": "participantPassword",
+      "value": "Participant123!",
+      "type": "string"
+    },
+    {
+      "key": "participantNextPassword",
+      "value": "Participant456!",
+      "type": "string"
+    },
+    {
+      "key": "participantFullName",
+      "value": "Sample Participant",
+      "type": "string"
+    },
+    {
+      "key": "participantAccessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "participantRefreshToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "participantUserId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "participantRegistrationId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "participantRegistrationNumber",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "organizerEmail",
+      "value": "organizer@example.com",
+      "type": "string"
+    },
+    {
+      "key": "organizerPassword",
+      "value": "Organizer123!",
+      "type": "string"
+    },
+    {
+      "key": "organizerAccessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "organizerRefreshToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "organizerUserId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "organizerEventId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "organizerRegistrationId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminEmail",
+      "value": "admin@example.com",
+      "type": "string"
+    },
+    {
+      "key": "adminPassword",
+      "value": "Admin123!",
+      "type": "string"
+    },
+    {
+      "key": "adminAccessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminRefreshToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminUserId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminManagedUserId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "publicEventId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "publicEventSlug",
+      "value": "sample-event-slug",
+      "type": "string"
+    },
+    {
+      "key": "verificationToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "categoryId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "notificationType",
+      "value": "registration_confirmation",
+      "type": "string"
+    },
+    {
+      "key": "idempotencyKey",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "requestId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "lastStatusCode",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "lastEntityId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "00 Public and Guest",
+      "auth": {
+        "type": "noauth"
+      },
+      "item": [
+        {
+          "name": "Health",
+          "item": [
+            {
+              "name": "Liveness",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Check whether the service process is up.",
+                "url": {
+                  "raw": "{{baseUrl}}/health",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "health"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Readiness",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Check whether PostgreSQL and Redis are ready.",
+                "url": {
+                  "raw": "{{baseUrl}}/health/ready",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "health",
+                    "ready"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Event Discovery",
+          "item": [
+            {
+              "name": "List Events",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Browse public events with filters and pagination.",
+                "url": {
+                  "raw": "{{baseUrl}}/events",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "events"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1",
+                      "description": "Page number"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10",
+                      "description": "Items per page"
+                    },
+                    {
+                      "key": "search",
+                      "value": "tech",
+                      "description": "Optional title/description search"
+                    },
+                    {
+                      "key": "sortBy",
+                      "value": "startDate",
+                      "description": "Sort by startDate or popularity"
+                    },
+                    {
+                      "key": "sortOrder",
+                      "value": "ASC",
+                      "description": "Sort direction"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Event by Slug",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Fetch full public event details using the event slug.",
+                "url": {
+                  "raw": "{{baseUrl}}/events/{{publicEventSlug}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "events",
+                    "{{publicEventSlug}}"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Categories",
+          "item": [
+            {
+              "name": "List Categories",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Fetch the public category tree.",
+                "url": {
+                  "raw": "{{baseUrl}}/categories",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "categories"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Authentication",
+          "item": [
+            {
+              "name": "Register Participant",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "description": "Register a new participant account.",
+                "url": {
+                  "raw": "{{baseUrl}}/auth/register",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "register"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{participantEmail}}\",\n  \"password\": \"{{participantPassword}}\",\n  \"fullName\": \"{{participantFullName}}\",\n  \"phone\": \"+15551234567\",\n  \"city\": \"Dhaka\",\n  \"organization\": \"OpenCode Labs\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Register request succeeds', function () {",
+                      "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                      "});",
+                      "",
+                      "const payload = pm.response.json();",
+                      "if (payload.user && payload.user.id) {",
+                      "  pm.collectionVariables.set('participantUserId', payload.user.id);",
+                      "}",
+                      "if (payload.verificationRequired !== undefined) {",
+                      "  pm.collectionVariables.set('participantVerificationRequired', String(payload.verificationRequired));",
+                      "}"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Verify Email",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Verify a user's email with the stored verification token.",
+                "url": {
+                  "raw": "{{baseUrl}}/auth/verify-email/{{verificationToken}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "verify-email",
+                    "{{verificationToken}}"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Login Participant",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "description": "Log in as a participant and store tokens for participant folders.",
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "login"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{participantEmail}}\",\n  \"password\": \"{{participantPassword}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Login succeeds', function () {",
+                      "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                      "});",
+                      "",
+                      "const payload = pm.response.json();",
+                      "pm.collectionVariables.set('participantAccessToken', payload.accessToken);",
+                      "pm.collectionVariables.set('participantRefreshToken', payload.refreshToken);",
+                      "pm.collectionVariables.set('participantUserId', payload.user.id);",
+                      "pm.collectionVariables.set('participantEmail', payload.user.email);",
+                      "pm.collectionVariables.set('lastAuthenticatedRole', payload.user.role);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Refresh Participant Token",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "description": "Rotate the participant refresh token.",
+                "url": {
+                  "raw": "{{baseUrl}}/auth/refresh",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "refresh"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"refreshToken\": \"{{participantRefreshToken}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Refresh succeeds', function () {",
+                      "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                      "});",
+                      "",
+                      "const payload = pm.response.json();",
+                      "pm.collectionVariables.set('participantAccessToken', payload.accessToken);",
+                      "pm.collectionVariables.set('participantRefreshToken', payload.refreshToken);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Logout Participant",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "description": "Revoke the participant refresh token.",
+                "url": {
+                  "raw": "{{baseUrl}}/auth/logout",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "logout"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"refreshToken\": \"{{participantRefreshToken}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "01 Participant",
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{participantAccessToken}}",
+            "type": "string"
+          }
+        ]
+      },
+      "item": [
+        {
+          "name": "Session",
+          "item": [
+            {
+              "name": "Current User",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Inspect the currently authenticated participant session.",
+                "url": {
+                  "raw": "{{baseUrl}}/auth/me",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "me"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Profile",
+          "item": [
+            {
+              "name": "Get Profile",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Fetch the participant profile document.",
+                "url": {
+                  "raw": "{{baseUrl}}/users/profile",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "users",
+                    "profile"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Profile",
+              "request": {
+                "method": "PATCH",
+                "header": [],
+                "description": "Update email or profile metadata for the participant.",
+                "url": {
+                  "raw": "{{baseUrl}}/users/profile",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "users",
+                    "profile"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"fullName\": \"{{participantFullName}}\",\n  \"phone\": \"+15551230000\",\n  \"city\": \"Chattogram\",\n  \"organization\": \"OpenCode Labs\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Change Password",
+              "request": {
+                "method": "PATCH",
+                "header": [],
+                "description": "Change the participant password.",
+                "url": {
+                  "raw": "{{baseUrl}}/users/password",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "users",
+                    "password"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"currentPassword\": \"{{participantPassword}}\",\n  \"newPassword\": \"{{participantNextPassword}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Upload Avatar",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "description": "Upload a participant avatar image.",
+                "url": {
+                  "raw": "{{baseUrl}}/users/avatar",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "users",
+                    "avatar"
+                  ]
+                },
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "file",
+                      "type": "file",
+                      "src": "",
+                      "description": "Attach a jpg/jpeg/png file up to 5 MB."
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Account",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "description": "Delete the participant account and related profile data.",
+                "url": {
+                  "raw": "{{baseUrl}}/users/account",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "users",
+                    "account"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Registrations",
+          "item": [
+            {
+              "name": "Register for Event",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "description": "Create an idempotent registration for a published event.",
+                "url": {
+                  "raw": "{{baseUrl}}/events/{{publicEventId}}/register",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "events",
+                    "{{publicEventId}}",
+                    "register"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"selectedPriceOption\": {\n    \"label\": \"General\",\n    \"amount\": 0\n  },\n  \"paymentMethod\": \"manual\",\n  \"metadata\": {\n    \"source\": \"postman\",\n    \"note\": \"sample registration request\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Registration request succeeds', function () {",
+                      "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                      "});",
+                      "",
+                      "const payload = pm.response.json();",
+                      "if (payload.id) {",
+                      "  pm.collectionVariables.set('participantRegistrationId', payload.id);",
+                      "  pm.collectionVariables.set('organizerRegistrationId', payload.id);",
+                      "}",
+                      "if (payload.registrationNumber) {",
+                      "  pm.collectionVariables.set('participantRegistrationNumber', payload.registrationNumber);",
+                      "}"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "List My Registrations",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "List registrations that belong to the participant.",
+                "url": {
+                  "raw": "{{baseUrl}}/users/registrations",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "users",
+                    "registrations"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Claim Waitlist Offer",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "description": "Claim an active waitlist offer for the participant.",
+                "url": {
+                  "raw": "{{baseUrl}}/registrations/{{participantRegistrationId}}/claim",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "registrations",
+                    "{{participantRegistrationId}}",
+                    "claim"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Cancel Registration",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "description": "Cancel a participant registration before the deadline.",
+                "url": {
+                  "raw": "{{baseUrl}}/registrations/{{participantRegistrationId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "registrations",
+                    "{{participantRegistrationId}}"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 Organizer",
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{organizerAccessToken}}",
+            "type": "string"
+          }
+        ]
+      },
+      "item": [
+        {
+          "name": "Auth Bootstrap",
+          "auth": {
+            "type": "noauth"
+          },
+          "item": [
+            {
+              "name": "Login Organizer",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "description": "Log in as an organizer and store organizer tokens.",
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "login"
+                  ]
+                },
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{organizerEmail}}\",\n  \"password\": \"{{organizerPassword}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Login succeeds', function () {",
+                      "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                      "});",
+                      "",
+                      "const payload = pm.response.json();",
+                      "pm.collectionVariables.set('organizerAccessToken', payload.accessToken);",
+                      "pm.collectionVariables.set('organizerRefreshToken', payload.refreshToken);",
+                      "pm.collectionVariables.set('organizerUserId', payload.user.id);",
+                      "pm.collectionVariables.set('organizerEmail', payload.user.email);",
+                      "pm.collectionVariables.set('lastAuthenticatedRole', payload.user.role);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Refresh Organizer Token",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "description": "Rotate the organizer refresh token.",
+                "url": {
+                  "raw": "{{baseUrl}}/auth/refresh",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "refresh"
+                  ]
+                },
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"refreshToken\": \"{{organizerRefreshToken}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Refresh succeeds', function () {",
+                      "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                      "});",
+                      "",
+                      "const payload = pm.response.json();",
+                      "pm.collectionVariables.set('organizerAccessToken', payload.accessToken);",
+                      "pm.collectionVariables.set('organizerRefreshToken', payload.refreshToken);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Logout Organizer",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "description": "Revoke the organizer refresh token.",
+                "url": {
+                  "raw": "{{baseUrl}}/auth/logout",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "logout"
+                  ]
+                },
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"refreshToken\": \"{{organizerRefreshToken}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Events",
+          "item": [
+            {
+              "name": "Create Event",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "description": "Create a new event as the organizer.",
+                "url": {
+                  "raw": "{{baseUrl}}/events",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "events"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"OpenCode Tech Expo 2026\",\n  \"description\": \"A sample organizer event used to exercise the API collection.\",\n  \"startDate\": \"2026-08-20T09:00:00.000Z\",\n  \"endDate\": \"2026-08-20T17:00:00.000Z\",\n  \"registrationDeadline\": \"2026-08-15T23:59:00.000Z\",\n  \"location\": \"Dhaka Convention Center\",\n  \"maxAttendees\": 300,\n  \"status\": \"published\",\n  \"price\": 0,\n  \"priceOptions\": [\n    {\n      \"label\": \"General\",\n      \"amount\": 0,\n      \"description\": \"Free admission\"\n    }\n  ],\n  \"categoryIds\": [],\n  \"metadata\": {\n    \"theme\": \"innovation\"\n  },\n  \"cancellationPolicy\": {\n    \"refundWindow\": \"before-deadline\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Event creation succeeds', function () {",
+                      "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                      "});",
+                      "",
+                      "const payload = pm.response.json();",
+                      "if (payload.id) {",
+                      "  pm.collectionVariables.set('organizerEventId', payload.id);",
+                      "  pm.collectionVariables.set('publicEventId', payload.id);",
+                      "}",
+                      "if (payload.slug) {",
+                      "  pm.collectionVariables.set('publicEventSlug', payload.slug);",
+                      "}"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Upload Event Image",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "description": "Upload the organizer event hero image.",
+                "url": {
+                  "raw": "{{baseUrl}}/events/{{organizerEventId}}/image",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "events",
+                    "{{organizerEventId}}",
+                    "image"
+                  ]
+                },
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "file",
+                      "type": "file",
+                      "src": "",
+                      "description": "Attach a jpg/jpeg/png file up to 8 MB."
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Event",
+              "request": {
+                "method": "PATCH",
+                "header": [],
+                "description": "Update event metadata, status, or scheduling details.",
+                "url": {
+                  "raw": "{{baseUrl}}/events/{{organizerEventId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "events",
+                    "{{organizerEventId}}"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"location\": \"Dhaka Convention Center Hall B\",\n  \"maxAttendees\": 320,\n  \"metadata\": {\n    \"theme\": \"innovation\",\n    \"updatedBy\": \"postman\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Event",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "description": "Delete an event that has no registrations.",
+                "url": {
+                  "raw": "{{baseUrl}}/events/{{organizerEventId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "events",
+                    "{{organizerEventId}}"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Operations",
+          "item": [
+            {
+              "name": "List Event Registrations",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "List registrations for the organizer-owned event.",
+                "url": {
+                  "raw": "{{baseUrl}}/events/{{organizerEventId}}/registrations",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "events",
+                    "{{organizerEventId}}",
+                    "registrations"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Export Event Registrations",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "description": "Export organizer event registrations as CSV content wrapped in JSON.",
+                "url": {
+                  "raw": "{{baseUrl}}/events/{{organizerEventId}}/export",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "events",
+                    "{{organizerEventId}}",
+                    "export"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Check In Registration",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "description": "Check in a confirmed event registration.",
+                "url": {
+                  "raw": "{{baseUrl}}/events/{{organizerEventId}}/registrations/{{organizerRegistrationId}}/check-in",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "events",
+                    "{{organizerEventId}}",
+                    "registrations",
+                    "{{organizerRegistrationId}}",
+                    "check-in"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 Admin",
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{adminAccessToken}}",
+            "type": "string"
+          }
+        ]
+      },
+      "item": [
+        {
+          "name": "Auth Bootstrap",
+          "auth": {
+            "type": "noauth"
+          },
+          "item": [
+            {
+              "name": "Login Admin",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "description": "Log in as an admin and store admin tokens.",
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "login"
+                  ]
+                },
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Login succeeds', function () {",
+                      "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                      "});",
+                      "",
+                      "const payload = pm.response.json();",
+                      "pm.collectionVariables.set('adminAccessToken', payload.accessToken);",
+                      "pm.collectionVariables.set('adminRefreshToken', payload.refreshToken);",
+                      "pm.collectionVariables.set('adminUserId', payload.user.id);",
+                      "pm.collectionVariables.set('adminEmail', payload.user.email);",
+                      "pm.collectionVariables.set('lastAuthenticatedRole', payload.user.role);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Refresh Admin Token",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "description": "Rotate the admin refresh token.",
+                "url": {
+                  "raw": "{{baseUrl}}/auth/refresh",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "refresh"
+                  ]
+                },
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"refreshToken\": \"{{adminRefreshToken}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Refresh succeeds', function () {",
+                      "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                      "});",
+                      "",
+                      "const payload = pm.response.json();",
+                      "pm.collectionVariables.set('adminAccessToken', payload.accessToken);",
+                      "pm.collectionVariables.set('adminRefreshToken', payload.refreshToken);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Logout Admin",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "description": "Revoke the admin refresh token.",
+                "url": {
+                  "raw": "{{baseUrl}}/auth/logout",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "logout"
+                  ]
+                },
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"refreshToken\": \"{{adminRefreshToken}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Dashboard",
+          "item": [
+            {
+              "name": "Get Dashboard",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Fetch high-level totals, charts, recent registrations, and recent activity.",
+                "url": {
+                  "raw": "{{baseUrl}}/admin/dashboard",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "dashboard"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Users",
+          "item": [
+            {
+              "name": "List Users",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "List users with pagination and admin filters.",
+                "url": {
+                  "raw": "{{baseUrl}}/admin/users",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "users"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1",
+                      "description": "Page number"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10",
+                      "description": "Items per page"
+                    },
+                    {
+                      "key": "search",
+                      "value": "admin",
+                      "description": "Optional free-text search"
+                    },
+                    {
+                      "key": "role",
+                      "value": "participant",
+                      "description": "Optional role filter"
+                    },
+                    {
+                      "key": "status",
+                      "value": "active",
+                      "description": "Optional status filter"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Change User Role",
+              "request": {
+                "method": "PATCH",
+                "header": [],
+                "description": "Promote or demote a user role.",
+                "url": {
+                  "raw": "{{baseUrl}}/admin/users/{{adminManagedUserId}}/role",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "users",
+                    "{{adminManagedUserId}}",
+                    "role"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"role\": \"organizer\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update User Status",
+              "request": {
+                "method": "PATCH",
+                "header": [],
+                "description": "Suspend or reactivate a user.",
+                "url": {
+                  "raw": "{{baseUrl}}/admin/users/{{adminManagedUserId}}/status",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "users",
+                    "{{adminManagedUserId}}",
+                    "status"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"suspended\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Registrations",
+          "item": [
+            {
+              "name": "List Registrations",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Search registrations across users and events.",
+                "url": {
+                  "raw": "{{baseUrl}}/admin/registrations",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "registrations"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1",
+                      "description": "Page number"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10",
+                      "description": "Items per page"
+                    },
+                    {
+                      "key": "search",
+                      "value": "EVT",
+                      "description": "Search registration number, email, or event title"
+                    },
+                    {
+                      "key": "status",
+                      "value": "confirmed",
+                      "description": "Optional registration status filter"
+                    },
+                    {
+                      "key": "paymentStatus",
+                      "value": "paid",
+                      "description": "Optional payment status filter"
+                    },
+                    {
+                      "key": "eventId",
+                      "value": "{{organizerEventId}}",
+                      "description": "Optional event filter"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Export Event Registrations",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "description": "Export registration rows for any event as CSV content wrapped in JSON.",
+                "url": {
+                  "raw": "{{baseUrl}}/admin/events/{{organizerEventId}}/export",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "events",
+                    "{{organizerEventId}}",
+                    "export"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Settings",
+          "item": [
+            {
+              "name": "Get Settings",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Fetch all system settings.",
+                "url": {
+                  "raw": "{{baseUrl}}/admin/settings",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "settings"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Settings",
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "description": "Upsert batch system settings.",
+                "url": {
+                  "raw": "{{baseUrl}}/admin/settings",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "settings"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"items\": [\n    {\n      \"key\": \"registration\",\n      \"value\": {\n        \"waitlistOfferHours\": 24,\n        \"supportEmail\": \"ops@example.com\"\n      },\n      \"description\": \"Registration workflow configuration\"\n    }\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Categories",
+          "item": [
+            {
+              "name": "Create Category",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "description": "Create a new category node.",
+                "url": {
+                  "raw": "{{baseUrl}}/categories",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "categories"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Hackathons\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Category",
+              "request": {
+                "method": "PATCH",
+                "header": [],
+                "description": "Rename or re-parent an existing category.",
+                "url": {
+                  "raw": "{{baseUrl}}/categories/{{categoryId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "categories",
+                    "{{categoryId}}"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Community Hackathons\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Category",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "description": "Delete a category node.",
+                "url": {
+                  "raw": "{{baseUrl}}/categories/{{categoryId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "categories",
+                    "{{categoryId}}"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Notification Templates",
+          "item": [
+            {
+              "name": "List Notification Templates",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Fetch all notification templates.",
+                "url": {
+                  "raw": "{{baseUrl}}/admin/notification-templates",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "notification-templates"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Notification Template",
+              "request": {
+                "method": "PATCH",
+                "header": [],
+                "description": "Update a notification template for one notification type.",
+                "url": {
+                  "raw": "{{baseUrl}}/admin/notification-templates/{{notificationType}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "notification-templates",
+                    "{{notificationType}}"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"subjectTemplate\": \"Registration update for {{eventName}}\",\n  \"textTemplate\": \"Hello {{name}}, your registration status changed.\",\n  \"enabled\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

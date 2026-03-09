@@ -1,0 +1,170 @@
+title Competition and Event Registration ERD
+colorMode pastel
+styleMode plain
+typeface clean
+notation crows-feet
+
+users [icon: user, color: blue] {
+  id uuid pk
+  email varchar unique
+  password varchar
+  role enum
+  status enum
+  emailVerified boolean
+  emailVerificationToken varchar nullable
+  emailVerifiedAt timestamptz nullable
+  createdAt timestamptz
+  updatedAt timestamptz
+}
+
+profiles [icon: id-card, color: teal] {
+  id uuid pk
+  userId uuid unique fk
+  fullName varchar
+  phone varchar nullable
+  city varchar nullable
+  organization varchar nullable
+  bio text nullable
+  avatarUrl varchar nullable
+  createdAt timestamptz
+  updatedAt timestamptz
+}
+
+events [icon: calendar, color: orange] {
+  id uuid pk
+  organizerId uuid fk
+  title varchar
+  description text
+  slug varchar unique
+  startDate timestamptz
+  endDate timestamptz
+  registrationDeadline timestamptz
+  location varchar
+  maxAttendees int
+  currentRegistrations int
+  status enum
+  price decimal
+  priceOptions jsonb nullable
+  imageUrl varchar nullable
+  metadata jsonb nullable
+  cancellationPolicy jsonb nullable
+  version int
+  createdAt timestamptz
+  updatedAt timestamptz
+}
+
+registrations [icon: clipboard, color: red] {
+  id uuid pk
+  eventId uuid fk
+  userId uuid fk
+  registrationNumber varchar unique
+  status enum
+  cancellationDate timestamptz nullable
+  paymentStatus enum
+  paymentAmount decimal
+  paymentMethod varchar nullable
+  selectedPriceOption jsonb nullable
+  checkInTime timestamptz nullable
+  metadata jsonb nullable
+  qrCodeDataUrl text nullable
+  waitlistPromotedAt timestamptz nullable
+  waitlistOfferExpiresAt timestamptz nullable
+  createdAt timestamptz
+  updatedAt timestamptz
+}
+
+categories [icon: tag, color: green] {
+  id uuid pk
+  parentId uuid nullable
+  name varchar unique
+  slug varchar unique
+  createdAt timestamptz
+  updatedAt timestamptz
+}
+
+event_categories [icon: layers, color: green] {
+  eventId uuid pk
+  categoryId uuid pk
+}
+
+refresh_tokens [icon: key, color: purple] {
+  id uuid pk
+  userId uuid fk
+  tokenId varchar unique
+  hashedToken varchar
+  revoked boolean
+  expiresAt timestamptz
+  createdAt timestamptz
+  updatedAt timestamptz
+}
+
+notification_templates [icon: mail, color: yellow] {
+  id uuid pk
+  type enum unique
+  subjectTemplate varchar
+  htmlTemplate text
+  textTemplate text
+  enabled boolean
+  createdAt timestamptz
+  updatedAt timestamptz
+}
+
+notification_deliveries [icon: send, color: yellow] {
+  id uuid pk
+  type enum
+  recipientEmail varchar
+  subject varchar
+  htmlBody text
+  textBody text
+  status varchar
+  sentAt timestamptz nullable
+  failedAt timestamptz nullable
+  failureReason text nullable
+  payload jsonb nullable
+  createdAt timestamptz
+  updatedAt timestamptz
+}
+
+system_settings [icon: settings, color: gray] {
+  id uuid pk
+  key varchar unique
+  value jsonb
+  description text nullable
+  createdAt timestamptz
+  updatedAt timestamptz
+}
+
+idempotency_keys [icon: shield, color: gray] {
+  id uuid pk
+  key varchar
+  scope varchar
+  userId uuid nullable
+  requestHash varchar
+  responseBody jsonb nullable
+  statusCode int nullable
+  completed boolean
+  expiresAt timestamptz
+  createdAt timestamptz
+  updatedAt timestamptz
+}
+
+audit_logs [icon: search, color: gray] {
+  id uuid pk
+  action varchar
+  entity varchar
+  actorUserId uuid nullable
+  metadata jsonb nullable
+  createdAt timestamptz
+  updatedAt timestamptz
+}
+
+profiles.userId - users.id
+events.organizerId > users.id
+registrations.userId > users.id
+registrations.eventId > events.id
+refresh_tokens.userId > users.id
+categories.parentId > categories.id
+event_categories.eventId > events.id
+event_categories.categoryId > categories.id
+idempotency_keys.userId > users.id
+audit_logs.actorUserId > users.id
