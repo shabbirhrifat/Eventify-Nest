@@ -4,7 +4,6 @@ import {
   Delete,
   Get,
   Param,
-  ParseFilePipeBuilder,
   ParseUUIDPipe,
   Patch,
   Post,
@@ -21,13 +20,17 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { UserRole } from '../common/enums/user-role.enum';
-import { createImageUploadOptions } from '../common/utils/file-upload.util';
+import {
+  createImageFileValidationPipe,
+  createImageUploadOptions,
+} from '../common/utils/file-upload.util';
 import { CreateEventDto } from './dto/create-event.dto';
 import { EventQueryDto } from './dto/event-query.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { EventsService } from './events.service';
 
 const eventImageUploadOptions = createImageUploadOptions('events');
+const eventImageValidationPipe = createImageFileValidationPipe(8 * 1024 * 1024);
 
 @Controller('events')
 export class EventsController {
@@ -62,12 +65,7 @@ export class EventsController {
   uploadImage(
     @Param('id', new ParseUUIDPipe()) eventId: string,
     @CurrentUserId() actorUserId: string,
-    @UploadedFile(
-      new ParseFilePipeBuilder()
-        .addFileTypeValidator({ fileType: /(jpg|jpeg|png)$/ })
-        .addMaxSizeValidator({ maxSize: 8 * 1024 * 1024 })
-        .build({ fileIsRequired: true, errorHttpStatusCode: 422 }),
-    )
+    @UploadedFile(eventImageValidationPipe)
     file: Express.Multer.File,
   ) {
     return this.eventsService.uploadEventImage(

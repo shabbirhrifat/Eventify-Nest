@@ -89,17 +89,26 @@ export class NotificationsService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    for (const type of Object.values(NotificationType)) {
-      const existing = await this.templateRepository.findOne({
-        where: { type },
-      });
+    try {
+      for (const type of Object.values(NotificationType)) {
+        const existing = await this.templateRepository.findOne({
+          where: { type },
+        });
 
-      if (!existing) {
-        const template = this.templateRepository.create(
-          DEFAULT_TEMPLATES[type],
-        );
-        await this.templateRepository.save(template);
+        if (!existing) {
+          const template = this.templateRepository.create(
+            DEFAULT_TEMPLATES[type],
+          );
+          await this.templateRepository.save(template);
+        }
       }
+    } catch (error: any) {
+      // If tables don't exist yet, skip initialization
+      // They will be created by TypeORM synchronization
+      this.logger.warn(
+        'Could not initialize notification templates. Tables might not exist yet.',
+        error.message,
+      );
     }
   }
 

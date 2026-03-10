@@ -3,7 +3,6 @@ import {
   Controller,
   Delete,
   Get,
-  ParseFilePipeBuilder,
   Patch,
   Post,
   UploadedFile,
@@ -14,12 +13,16 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { AccountStatusGuard } from '../common/guards/account-status.guard';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUserId } from '../common/decorators/current-user-id.decorator';
-import { createImageUploadOptions } from '../common/utils/file-upload.util';
+import {
+  createImageFileValidationPipe,
+  createImageUploadOptions,
+} from '../common/utils/file-upload.util';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UsersService } from './users.service';
 
 const avatarUploadOptions = createImageUploadOptions('avatars');
+const avatarValidationPipe = createImageFileValidationPipe(5 * 1024 * 1024);
 
 @Controller('users')
 @UseGuards(JwtAuthGuard, AccountStatusGuard)
@@ -51,12 +54,7 @@ export class UsersController {
   @UseInterceptors(FileInterceptor('file', avatarUploadOptions))
   uploadAvatar(
     @CurrentUserId() userId: string,
-    @UploadedFile(
-      new ParseFilePipeBuilder()
-        .addFileTypeValidator({ fileType: /(jpg|jpeg|png)$/ })
-        .addMaxSizeValidator({ maxSize: 5 * 1024 * 1024 })
-        .build({ fileIsRequired: true, errorHttpStatusCode: 422 }),
-    )
+    @UploadedFile(avatarValidationPipe)
     file: Express.Multer.File,
   ) {
     return this.usersService.updateAvatar(userId, file.filename);

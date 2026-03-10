@@ -66,8 +66,13 @@ export class RegistrationsController {
   @Post('events/:eventId/registrations/:id/check-in')
   checkIn(
     @CurrentUserId() actorUserId: string,
+    @Param('eventId', new ParseUUIDPipe()) eventId: string,
     @Param('id', new ParseUUIDPipe()) registrationId: string,
   ) {
-    return this.registrationsService.checkIn(actorUserId, registrationId);
+    return this.registrationsService.checkIn(
+      actorUserId,
+      eventId,
+      registrationId,
+    );
   }
 }

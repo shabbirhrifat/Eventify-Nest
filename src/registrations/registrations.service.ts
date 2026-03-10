@@ -381,7 +381,7 @@ export class RegistrationsService {
     });
   }
 
-  async checkIn(actorUserId: string, registrationId: string) {
+  async checkIn(actorUserId: string, eventId: string, registrationId: string) {
     const registration = await this.registrationRepository.findOne({
       where: { id: registrationId },
       relations: { event: { organizer: true }, user: { profile: true } },
@@ -389,6 +389,10 @@ export class RegistrationsService {
 
     if (!registration) {
       throw new NotFoundException('Registration not found.');
+    }
+
+    if (registration.event.id !== eventId) {
+      throw new NotFoundException('Registration not found for this event.');
     }
 
     const actor = await this.userRepository.findOne({

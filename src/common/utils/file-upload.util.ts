@@ -1,3 +1,4 @@
+import { ParseFilePipeBuilder } from '@nestjs/common';
 import { mkdirSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { extname, join } from 'node:path';
@@ -21,4 +22,14 @@ export function createImageUploadOptions(folder: string): MulterOptions {
       },
     }),
   };
+}
+
+export function createImageFileValidationPipe(maxSizeInBytes: number) {
+  return new ParseFilePipeBuilder()
+    .addFileTypeValidator({
+      fileType: /^image\/(jpeg|png)$/,
+      fallbackToMimetype: true,
+    })
+    .addMaxSizeValidator({ maxSize: maxSizeInBytes })
+    .build({ fileIsRequired: true, errorHttpStatusCode: 422 });
 }

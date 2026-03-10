@@ -70,4 +70,22 @@ describe('RegistrationsService', () => {
       service.createRegistration('user-1', 'event-1', {}, 'idem-key'),
     ).resolves.toEqual({ id: 'registration-1', status: 'confirmed' });
   });
+
+  it('rejects check-in when the registration is for another event', async () => {
+    registrationRepository.findOne.mockResolvedValue({
+      id: 'registration-1',
+      event: {
+        id: 'event-2',
+        organizer: { id: 'organizer-1' },
+      },
+      user: {
+        id: 'user-1',
+        profile: { fullName: 'User Example' },
+      },
+    } as never);
+
+    await expect(
+      service.checkIn('organizer-1', 'event-1', 'registration-1'),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
 });

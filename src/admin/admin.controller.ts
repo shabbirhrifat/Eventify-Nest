@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  ParseEnumPipe,
   ParseUUIDPipe,
   Patch,
   Post,
@@ -90,7 +91,7 @@ export class AdminController {
 
   @Patch('notification-templates/:type')
   updateNotificationTemplate(
-    @Param('type') type: NotificationType,
+    @Param('type', new ParseEnumPipe(NotificationType)) type: NotificationType,
     @Body() updateNotificationTemplateDto: UpdateNotificationTemplateDto,
   ) {
     return this.adminService.updateNotificationTemplate(

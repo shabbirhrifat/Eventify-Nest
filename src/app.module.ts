@@ -1,7 +1,7 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_GUARD } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -10,7 +10,6 @@ import { AuditLogsModule } from './audit-logs/audit-logs.module';
 import { AuthModule } from './auth/auth.module';
 import { RedisModule } from './cache/redis.module';
 import { CategoriesModule } from './categories/categories.module';
-import { SanitizeBodyInterceptor } from './common/interceptors/sanitize-body.interceptor';
 import { RolesGuard } from './common/guards/roles.guard';
 import { RequestLoggerMiddleware } from './common/middleware/request-logger.middleware';
 import { appConfig } from './config/app.config';
@@ -107,10 +106,6 @@ import { UsersModule } from './users/users.module';
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
-    },
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: SanitizeBodyInterceptor,
     },
   ],
 })

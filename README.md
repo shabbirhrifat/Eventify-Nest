@@ -72,11 +72,13 @@ Those are not blocked by the current architecture; the project already includes 
 1. Install dependencies.
 2. Copy `.env.example` to `.env`.
 3. Start PostgreSQL and Redis.
-4. Run the app in development mode.
+4. Create the database schema.
+5. Run the app in development mode.
 
 ```bash
 npm install
 cp .env.example .env
+npm run migration:run
 npm run start:dev
 ```
 
@@ -117,6 +119,8 @@ Defined in `.env.example` and validated in `src/config/env.validation.ts`.
 | `REGISTRATION_QUEUE_ATTEMPTS` | Reserved for registration queue tuning |
 
 Development tip: set `SMTP_HOST=log` to use Nodemailer's JSON transport instead of a real SMTP server.
+
+If you hit errors like `relation "events" does not exist` or `relation "users" does not exist`, the app is connected to PostgreSQL but the schema has not been created yet. Run `npm run migration:run` against that database before starting the server.
 
 ## Scripts
 

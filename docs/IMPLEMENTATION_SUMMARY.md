@@ -49,13 +49,12 @@ Verified locally:
 
 ## Important Notes
 
-- Migration tooling is configured in `src/database/data-source.ts` and `package.json`, but an auto-generated initial SQL migration has not been checked in yet.
+- Migration tooling is configured in `src/database/data-source.ts` and `package.json`, and the initial schema migration is checked in at `src/database/migrations/1773132594053-AutoMigration.ts`.
 - Payment provider integration is modeled at the domain level through payment fields and idempotent registration flow, but a real Stripe/PayPal webhook module is still a next-step enhancement.
 - Advanced PRD items such as multi-tenancy, GraphQL, WebSockets, external webhooks, and analytics are intentionally left for future expansion.
 
 ## Recommended Next Steps
 
-1. Generate and commit the initial TypeORM migration with `npm run migration:generate`.
-2. Add integration tests against PostgreSQL and Redis using containers.
-3. Add a real payment provider and webhook signature validation.
-4. Add Swagger/OpenAPI for interactive API documentation.
+1. Add integration tests against PostgreSQL and Redis using containers.
+2. Add a real payment provider and webhook signature validation.
+3. Add Swagger/OpenAPI for interactive API documentation.
